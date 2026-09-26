@@ -1,0 +1,16 @@
+package it.elaris.core.model
+@JvmInline value class RealmId(val value:String)
+@JvmInline value class CityId(val value:String)
+@JvmInline value class CharacterId(val value:String)
+@JvmInline value class FactionId(val value:String)
+@JvmInline value class ItemId(val value:String)
+@JvmInline value class EventId(val value:String)
+@JvmInline value class CommandId(val value:String)
+data class GameTime(val tick:Long=0L){init{require(tick>=0)}}
+data class Realm(val id:RealmId,val name:String,val ruler:CharacterId?)
+data class City(val id:CityId,val realmId:RealmId,val name:String,val population:Long,val stability:Int=50,val prosperity:Int=50)
+data class Character(val id:CharacterId,val name:String,val realmId:RealmId?,val level:Int,val powerLabel:String,val isPlayer:Boolean=false)
+data class Faction(val id:FactionId,val name:String)
+data class Relationship(val a:FactionId,val b:FactionId,val trust:Int=0,val hostility:Int=0)
+data class WorldEvent(val id:EventId,val time:GameTime,val type:String,val source:CharacterId?,val affected:Set<String>,val payload:Map<String,String> = emptyMap())
+data class WorldState(val time:GameTime,val realms:Map<RealmId,Realm>,val cities:Map<CityId,City>,val characters:Map<CharacterId,Character>,val factions:Map<FactionId,Faction>,val relationships:Map<Pair<FactionId,FactionId>,Relationship>,val inventory:Map<CharacterId,Map<ItemId,Int>>,val events:List<WorldEvent>,val appliedCommands:Set<CommandId>,val appliedEvents:Set<EventId>)
