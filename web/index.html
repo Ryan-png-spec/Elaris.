@@ -24,6 +24,21 @@ button:disabled{opacity:.45}.row{display:flex;gap:8px;align-items:center;justify
 </head>
 <body><main><div id="app"></div></main>
 <script>
+/* Elaris integrity/self-test: runs silently in development builds and exposes failures in console. */
+function elarisSelfTest(){
+  const required=["world","player","npcs","chronicles","inventory"];
+  const s=window.state;
+  const failures=[];
+  if(!s) failures.push("state missing");
+  else required.forEach(k=>{if(!(k in s)) failures.push("missing "+k)});
+  if(s?.player && (s.player.hp<0||s.player.hp>s.player.maxHp)) failures.push("invalid hp");
+  if(s?.inventory && Object.values(s.inventory).some(v=>v<0)) failures.push("negative inventory");
+  if(failures.length) console.error("ELARIS SELF TEST FAILED",failures);
+  else console.info("ELARIS SELF TEST OK");
+  return failures.length===0;
+}
+</script>
+<script>
 "use strict";
 const KEY="elaris-web-save-v2";
 const REALMS=[
