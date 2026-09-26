@@ -4,7 +4,7 @@ plugins {
 }
 android {
     namespace = "it.elaris.app"
-    compileSdk = 35
+    compileSdk = 37
     defaultConfig {
         applicationId = "it.elaris.app"
         minSdk = 26
