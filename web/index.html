@@ -1,30 +1,200 @@
 <!doctype html>
-<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Elaris</title>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Elaris — World Simulation</title>
 <style>
-:root{font-family:system-ui,sans-serif;background:#10131a;color:#f5f5f5}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#171b26,#0b0d12);min-height:100vh}main{max-width:720px;margin:auto;padding:18px 16px 36px}button{width:100%;padding:14px;margin:5px 0;border:0;border-radius:12px;background:#2d3446;color:#fff;font-size:16px}button.primary{background:#6d4aff}.card{background:#1b202c;border:1px solid #303748;border-radius:18px;padding:18px;margin:12px 0}h1{font-size:34px;margin:8px 0}.muted{color:#aab1c1}.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#2a3040;margin:3px;font-size:13px}.log{max-height:250px;overflow:auto;background:#0b0d12;border-radius:12px;padding:10px}.log p{margin:6px 0;padding-bottom:6px;border-bottom:1px solid #252a35}.ok{color:#8be6a0}
-</style></head><body><main><div id="app"></div></main>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0b1020;color:#eef2ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#1b2440,#080b13 65%);min-height:100vh}
+main{max-width:860px;margin:auto;padding:16px 14px 40px}
+h1{font-size:34px;margin:4px 0}.muted{color:#aeb8d0}.small{font-size:13px}
+.card{background:#151b2b;border:1px solid #2c3650;border-radius:18px;padding:16px;margin:10px 0;box-shadow:0 8px 30px #0004}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}@media(min-width:680px){.grid{grid-template-columns:repeat(4,1fr)}}
+button{width:100%;padding:13px;margin:4px 0;border:0;border-radius:12px;background:#29334b;color:#fff;font-size:15px;font-weight:650}
+button.primary{background:#7357ff}button.good{background:#176b48}button.warn{background:#815c20}button.danger{background:#7d2630}
+button:disabled{opacity:.45}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#273149;margin:3px;font-size:12px}
+.stat{background:#0e1422;border-radius:12px;padding:10px;margin:6px 0}.bar{height:10px;background:#080b12;border-radius:99px;overflow:hidden}.fill{height:100%;background:#66d38c}
+.enemy .fill{background:#e36c74}.log{max-height:300px;overflow:auto;background:#090d16;border-radius:12px;padding:9px}
+.log p{margin:5px 0;padding:6px;border-bottom:1px solid #20283a}.tabs{position:sticky;bottom:0;background:#0b1020dd;backdrop-filter:blur(8px);padding:7px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.tabs button{font-size:12px;padding:10px 4px;margin:0}.notice{padding:10px;border-radius:12px;background:#202a42}.dangerText{color:#ff929b}.goodText{color:#8de8ad}
+</style>
+</head>
+<body><main><div id="app"></div></main>
 <script>
-const KEY="elaris-web-save-v1";
-const realms=["Thalorien","Maraveth","Avernia","Eldoria","Nharak","Valoria","Kharad","Sylvaris","Draken","Lunareth","Veyria","Ashkar","Eryndor"];
-let state={screen:"menu",tick:0,hp:100,potions:2,chronicles:["Il mondo di Elaris attende Ryan Shadow."],combat:null,message:""};
+"use strict";
+const KEY="elaris-web-save-v2";
+const REALMS=[
+ {id:"thalorien",name:"Thalorien",capital:"Aurelia",ruler:"Ryan Shadow",power:100},
+ {id:"maraveth",name:"Maraveth",capital:"Lysmar",ruler:"Raelthar",power:93},
+ {id:"avernia",name:"Avernia",capital:"Veyrhold",ruler:"Theron Veyr",power:72},
+ {id:"eldoria",name:"Eldoria",capital:"Eldor",ruler:"Aelwen",power:81},
+ {id:"nharak",name:"Nharak",capital:"Khar-Nar",ruler:"Varkun",power:76},
+ {id:"valoria",name:"Valoria",capital:"Valen",ruler:"Seraphine",power:78},
+ {id:"kharad",name:"Kharad",capital:"Durn-Khaz",ruler:"Brom",power:74},
+ {id:"sylvaris",name:"Sylvaris",capital:"Lethar",ruler:"Elyra",power:83},
+ {id:"draken",name:"Draken",capital:"Drakemarch",ruler:"Rhaegor",power:88},
+ {id:"lunareth",name:"Lunareth",capital:"Lunaris",ruler:"Maelis",power:79},
+ {id:"veyria",name:"Veyria",capital:"Veyr",ruler:"Cassian",power:75},
+ {id:"ashkar",name:"Ashkar",capital:"Ashen",ruler:"Zareth",power:86},
+ {id:"eryndor",name:"Eryndor",capital:"Eryn",ruler:"Thalen",power:77}
+];
 const app=document.getElementById("app");
-function render(){let h='<h1>ELARIS</h1><div class="muted">Prototipo Web • mondo persistente • tick '+state.tick+'</div>';if(state.message)h+='<div class="card"><span class="ok">'+state.message+'</span></div>';app.innerHTML=h;({menu,world,character,adventure,combat,chronicles,inventory})[state.screen]();}
-function add(h){app.innerHTML+=h}
-function save(){localStorage.setItem(KEY,JSON.stringify(state));state.message="Partita salvata.";render()}
-function load(){let r=localStorage.getItem(KEY);if(!r){state.message="Nessun salvataggio presente.";render();return}try{state={...state,...JSON.parse(r),screen:"world",message:"Partita caricata."};render()}catch(e){state.message="Salvataggio non valido.";render()}}
-function start(){state={screen:"world",tick:0,hp:100,potions:2,chronicles:["Il viaggio di Ryan Shadow ha inizio."],combat:null,message:""};render()}
+function seedState(){
+ return {version:2,screen:"menu",day:1,hour:8,seed:914273,rng:914273,
+  player:{name:"Ryan Shadow",realm:"thalorien",level:1,xp:0,hp:100,maxHp:100,gold:100,
+   potions:2,weapon:"Lama d'ombra",alive:true,known:["thalorien"],reputation:{}},
+  world:{food:100,stability:82,trade:68,war:false,relations:{"thalorien|maraveth":55,"thalorien|avernia":30}},
+  npcs:[
+   {id:"raeth",name:"Raeth",role:"Capitano di pattuglia",realm:"thalorien",hp:80,level:8,goal:"proteggere la frontiera",trust:10,alive:true},
+   {id:"mira",name:"Mira",role:"Mercante",realm:"thalorien",hp:55,level:4,goal:"aprire nuove rotte",trust:0,alive:true},
+   {id:"theron",name:"Theron Veyr",role:"Sovrano",realm:"avernia",hp:120,level:14,goal:"mantenere l'isolamento",trust:-5,alive:true},
+   {id:"raelthar",name:"Raelthar",role:"Sovrano",realm:"maraveth",hp:130,level:16,goal:"espandere il commercio",trust:5,alive:true}
+  ],
+  inventory:[{id:"potion",name:"Pozione di cura",qty:2,value:20},{id:"iron",name:"Lingotto di ferro",qty:3,value:15}],
+  events:[],chronicles:["Giorno 1 — Il mondo di Elaris attende Ryan Shadow."],
+  combat:null,message:""};
+}
+let state=seedState();
+function rand(){state.rng=(state.rng*1664525+1013904223)>>>0;return state.rng/4294967296}
+function roll(n){return Math.floor(rand()*n)}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function realm(id){return REALMS.find(r=>r.id===id)}
+function npc(id){return state.npcs.find(n=>n.id===id)}
+function log(text){state.chronicles.push("G"+state.day+" • "+text);state.message=text}
+function addItem(id,name,qty,value){let i=state.inventory.find(x=>x.id===id);if(i)i.qty+=qty;else state.inventory.push({id,name,qty,value})}
+function useItem(id){let i=state.inventory.find(x=>x.id===id&&x.qty>0);if(!i)return false;i.qty--;return true}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({...state,screen:"world",message:""}));state.message="Partita salvata nel telefono.";render()}catch(e){state.message="Salvataggio non riuscito.";render()}}
+function load(){try{let raw=localStorage.getItem(KEY);if(!raw){state.message="Nessun salvataggio presente.";render();return}let x=JSON.parse(raw);if(!x.version||!x.player||!x.world)throw Error();state={...seedState(),...x,message:"Partita caricata."};render()}catch(e){state.message="Salvataggio non valido: partita protetta.";render()}}
+function start(){state=seedState();log("Ryan Shadow entra nel mondo.");state.screen="world";render()}
 function nav(s){state.screen=s;state.message="";render()}
-function advance(){state.tick++;state.chronicles.push("T"+state.tick+" — Il tempo passa.")}
-function log(t){state.chronicles.push("T"+state.tick+" — "+t);state.message=t;render()}
-function beginCombat(){state.combat={enemyHp:60,enemyName:"Predone",turn:0};nav("combat")}
-function fight(){let c=state.combat;if(!c)return;let dmg=Math.floor(22+Math.random()*19),enemy=Math.floor(7+Math.random()*9);c.enemyHp=Math.max(0,c.enemyHp-dmg);c.turn++;if(c.enemyHp<=0){advance();state.combat=null;state.chronicles.push("T"+state.tick+" — Ryan Shadow ha sconfitto il predone.");state.screen="adventure";state.message="Combattimento vinto.";render();return}state.hp=Math.max(0,state.hp-enemy);if(state.hp<=0){state.hp=1;state.combat=null;state.screen="adventure";state.message="Ryan si ritira ferito.";state.chronicles.push("T"+state.tick+" — Ryan è stato ferito e si è ritirato.");}render()}
-function heal(){if(state.potions>0&&state.hp<100){state.potions--;state.hp=Math.min(100,state.hp+35);state.message="Pozione utilizzata."}else state.message="Nessuna pozione utilizzabile.";render()}
-function menu(){add('<div class="card"><h2>Benvenuto in Elaris</h2><p class="muted">Prima versione giocabile: Ryan, mondo, avventura, combattimento, cronache e salvataggio.</p><button class="primary" onclick="start()">START</button><button onclick="load()">CARICA PARTITA</button><button onclick="save()">SALVA PARTITA</button></div><div class="card"><b>Test consigliato</b><p>START → Avventura → Combattimento → Cronache → Salva → ricarica.</p></div>')}
-function world(){add('<div class="card"><h2>Mondo</h2><p>Ryan Shadow si trova a Thalorien.</p>'+realms.map(function(r){return '<span class="badge">'+r+'</span>'}).join("")+'</div><div class="card"><button class="primary" onclick="nav(\'character\')">PERSONAGGIO</button><button onclick="nav(\'adventure\')">AVVENTURA</button><button onclick="nav(\'chronicles\')">CRONACHE</button><button onclick="nav(\'inventory\')">INVENTARIO</button><button onclick="save()">SALVA PARTITA</button><button onclick="nav(\'menu\')">MENU</button></div>')}
-function character(){add('<div class="card"><h2>Ryan Shadow</h2><p><b>Ruolo:</b> Protagonista</p><p><b>Potere:</b> NON QUANTIFICABILE</p><p><b>Regno:</b> Thalorien</p><p><b>PV:</b> '+state.hp+'/100</p><p>Il giocatore controlla Ryan; il mondo controlla gli altri personaggi.</p></div><div class="card"><button onclick="nav(\'world\')">MONDO</button><button onclick="nav(\'adventure\')">AVVENTURA</button></div>')}
-function adventure(){add('<div class="card"><h2>Avventura</h2><p>Una pattuglia attraversa una strada isolata di Thalorien. Un predone esce dalla boscaglia.</p><button class="primary" onclick="beginCombat()">AFFRONTA IL PREDONE</button><button onclick="advance();log(\'Ryan osserva la strada e prosegue.\')">PROSEGUI</button></div><div class="card"><button onclick="nav(\'world\')">MONDO</button></div>')}
-function combat(){let c=state.combat;if(!c){nav("adventure");return}add('<div class="card"><h2>Combattimento</h2><p>Ryan Shadow <b>'+state.hp+' PV</b> vs '+c.enemyName+' <b>'+c.enemyHp+' PV</b></p><button class="primary" onclick="fight()">COMBATTI</button><button onclick="heal()">USA POZIONE ('+state.potions+')</button><p class="muted">Turno '+c.turn+'. Lo scontro ha terminazione garantita.</p></div>')}
-function chronicles(){add('<div class="card"><h2>Cronache</h2><div class="log">'+state.chronicles.slice().reverse().map(function(x){return '<p>'+x+'</p>'}).join("")+'</div></div><div class="card"><button onclick="nav(\'world\')">MONDO</button></div>')}
-function inventory(){add('<div class="card"><h2>Inventario</h2><p>• Pozione di cura: <b>'+state.potions+'</b></p><p class="muted">Inventario minimale del prototipo.</p></div><div class="card"><button onclick="heal()">USA POZIONE</button><button onclick="nav(\'world\')">MONDO</button></div>')}
+function gainXp(n){state.player.xp+=n;let need=100*state.player.level;if(state.player.xp>=need){state.player.xp-=need;state.player.level++;state.player.maxHp+=12;state.player.hp=state.player.maxHp;log("Ryan cresce al livello "+state.player.level+".")}}
+function tick(hours=6){
+ for(let i=0;i<hours;i++){
+  state.hour++; if(state.hour>=24){state.hour=0;state.day++;dailyWorld()}
+  if(state.hour%3===0) npcStep();
+ }
+ log("Il tempo avanza di "+hours+" ore."); state.screen=state.screen==="world"?"world":state.screen;render()
+}
+function dailyWorld(){
+ let foodDelta=roll(9)-4; state.world.food=Math.max(0,Math.min(100,state.world.food+foodDelta));
+ state.world.trade=Math.max(0,Math.min(100,state.world.trade+roll(7)-3));
+ state.world.stability=Math.max(0,Math.min(100,state.world.stability+(state.world.food<30?-4:1)+roll(5)-2));
+ if(roll(12)===0){let e=["un mercato affollato","una disputa tra mercanti","una pattuglia scomparsa","un raccolto abbondante","voci di tensione diplomatica"][roll(5)];state.events.push({day:state.day,text:e});log("Evento mondiale: "+e+".")}
+ if(state.world.stability<25&&!state.world.war){state.world.war=true;log("La stabilità cala: una crisi regionale esplode.");}
+}
+function npcStep(){
+ let living=state.npcs.filter(n=>n.alive);if(!living.length)return;
+ let n=living[roll(living.length)];
+ if(n.goal.includes("commerc")) state.world.trade=Math.min(100,state.world.trade+1);
+ else if(n.goal.includes("frontiera")) state.world.stability=Math.min(100,state.world.stability+1);
+ else n.trust+=roll(3)-1;
+ if(roll(18)===0){n.trust+=roll(9)-4;state.events.push({day:state.day,text:n.name+" ha preso una decisione autonoma."});}
+}
+function relation(a,b){return state.world.relations[a+"|"+b]??state.world.relations[b+"|"+a]??0}
+function setRelation(a,b,v){let k=a+"|"+b;state.world.relations[k]=Math.max(-100,Math.min(100,v))}
+function explore(){
+ let events=[
+  ["Hai trovato una carovana abbandonata. Puoi indagare o lasciarla.", "caravan"],
+  ["Un viandante chiede aiuto per raggiungere la città.", "traveler"],
+  ["Una creatura ostile blocca il sentiero.", "monster"],
+  ["La strada è tranquilla. Il viaggio procede senza incidenti.", "quiet"]
+ ];
+ let e=events[roll(events.length)];state.eventChoice=e[1];state.message=e[0];render()
+}
+function resolveExplore(kind){
+ delete state.eventChoice;
+ if(kind==="caravan"){addItem("cloth","Tessuto raro",1,30);state.player.gold+=15;log("Ryan recupera risorse dalla carovana.");}
+ if(kind==="traveler"){gainXp(20);state.player.reputation.thalorien=(state.player.reputation.thalorien||0)+2;log("Ryan aiuta un viandante; la voce dell'atto circola.");}
+ if(kind==="monster"){beginCombat("Bestia delle selve",75,6);}
+ if(kind==="quiet"){tick(4);return}
+ render()
+}
+function beginCombat(name,hp,level){
+ state.combat={enemyName:name,enemyHp:hp,enemyMax:hp,enemyLevel:level,turn:0};state.screen="combat";state.message="Scontro iniziato.";render()
+}
+function fight(){
+ let c=state.combat;if(!c)return;
+ c.turn++;
+ let base=18+state.player.level*4, dmg=base+roll(14), enemyDmg=Math.max(3,7+roll(9)+c.enemyLevel-state.player.level);
+ c.enemyHp=Math.max(0,c.enemyHp-dmg);
+ if(c.enemyHp<=0){let xp=35+c.enemyLevel*8;state.player.gold+=10+c.enemyLevel;gainXp(xp);state.combat=null;log("Ryan sconfigge "+c.enemyName+" e ottiene esperienza.");state.screen="adventure";render();return}
+ state.player.hp=Math.max(0,state.player.hp-enemyDmg);
+ if(state.player.hp<=0){state.player.hp=1;state.combat=null;log("Ryan è stato sconfitto ma riesce a ritirarsi ferito.");state.screen="adventure"}
+ render()
+}
+function heal(){
+ if(useItem("potion")&&state.player.hp<state.player.maxHp){state.player.hp=Math.min(state.player.maxHp,state.player.hp+35);state.message="Ryan usa una pozione."}
+ else state.message="Nessuna pozione utilizzabile.";render()
+}
+function trade(){
+ if(state.player.gold<25){state.message="Oro insufficiente.";render();return}
+ state.player.gold-=25;addItem("iron","Lingotto di ferro",2,15);state.world.trade=Math.min(100,state.world.trade+3);log("Ryan commercia con una carovana.");render()
+}
+function diplomacy(){
+ let v=relation("thalorien","maraveth")+5;setRelation("thalorien","maraveth",v);state.player.reputation.maraveth=(state.player.reputation.maraveth||0)+1;
+ state.events.push({day:state.day,text:"Un contatto diplomatico da Thalorien a Maraveth."});log("Un incontro diplomatico migliora leggermente i rapporti con Maraveth.");render()
+}
+function render(){
+ let r=realm(state.player.realm);
+ let header='<h1>ELARIS</h1><div class="muted">Giorno '+state.day+' • '+String(state.hour).padStart(2,"0")+':00 • '+r.name+'</div>';
+ if(state.message)header+='<div class="card notice">'+esc(state.message)+'</div>';
+ app.innerHTML=header;
+ ({menu,world,character,adventure,combat,chronicles,inventory,diplomacyScreen,information,economy})[state.screen]?.();
+}
+function menu(){
+ app.innerHTML+=\`<div class="card"><h2>Un mondo che continua a vivere</h2><p class="muted">Prototype v2: tempo, NPC autonomi, economia, diplomazia, avventura, combattimento, inventario, cronache e salvataggio locale.</p>
+ <button class="primary" onclick="start()">START</button><button onclick="load()">CARICA PARTITA</button><button onclick="save()">SALVA PARTITA</button></div>
+ <div class="card"><b>Ryan Shadow</b><p>Protagonista • potere <b>NON QUANTIFICABILE</b> • controllo esclusivo del giocatore.</p></div>\`
+}
+function world(){
+ let rs=REALMS.map(x=>\`<span class="badge">\${x.name}</span>\`).join("");
+ app.innerHTML+=\`<div class="card"><h2>Mondo</h2><p>13 entità canoniche. Il mondo può cambiare anche senza azioni di Ryan.</p>\${rs}
+ <div class="grid"><div class="stat">Cibo<br><b>\${state.world.food}/100</b></div><div class="stat">Stabilità<br><b>\${state.world.stability}/100</b></div><div class="stat">Commercio<br><b>\${state.world.trade}/100</b></div><div class="stat">Guerra<br><b>\${state.world.war?"ATTIVA":"No"}</b></div></div></div>\`
+ tabs()
+}
+function character(){
+ let p=state.player,need=100*p.level;
+ app.innerHTML+=\`<div class="card"><h2>Ryan Shadow</h2><p><b>Potere:</b> NON QUANTIFICABILE</p><p><b>Regno:</b> \${esc(realm(p.realm).name)}</p><p><b>Livello:</b> \${p.level} • <b>XP:</b> \${p.xp}/\${need}</p><div class="stat">PV \${p.hp}/\${p.maxHp}<div class="bar"><div class="fill" style="width:\${100*p.hp/p.maxHp}%"></div></div></div><p>Oro: <b>\${p.gold}</b></p><p>Il motore decide il mondo e gli NPC. Ryan non viene mosso automaticamente.</p></div>\`
+ tabs()
+}
+function adventure(){
+ if(state.eventChoice){
+  app.innerHTML+=\`<div class="card"><h2>Evento</h2><p>\${esc(state.message)}</p>
+  <button class="primary" onclick="resolveExplore('caravan')">INDAGA</button><button onclick="resolveExplore('traveler')">AIUTA</button><button class="danger" onclick="resolveExplore('monster')">AFFRONTA</button><button onclick="resolveExplore('quiet')">IGNORA E PROSEGUI</button></div>\`
+ }else{
+  app.innerHTML+=\`<div class="card"><h2>Avventura</h2><p>Strade, incontri e pericoli emergono dal mondo. Nessun esito è garantito.</p>
+  <button class="primary" onclick="explore()">ESPLORA</button><button onclick="tick(6)">ATTENDI 6 ORE</button></div>\`
+ }
+ tabs()
+}
+function combat(){
+ let c=state.combat;if(!c){state.screen="adventure";render();return}
+ app.innerHTML+=\`<div class="card enemy"><h2>Combattimento</h2><p>Ryan Shadow <b>\${state.player.hp}/\${state.player.maxHp}</b></p><div class="bar"><div class="fill" style="width:\${100*state.player.hp/state.player.maxHp}%"></div></div><hr><p>\${esc(c.enemyName)} • livello \${c.enemyLevel} • <b>\${c.enemyHp}/\${c.enemyMax} PV</b></p><div class="bar"><div class="fill" style="width:\${100*c.enemyHp/c.enemyMax}%"></div></div><p class="muted">Turno \${c.turn}. Lo scontro ha un numero finito di azioni e non può rimanere bloccato.</p>
+ <button class="primary" onclick="fight()">COMBATTI</button><button onclick="heal()">USA POZIONE</button><button class="warn" onclick="state.combat=null;state.screen='adventure';state.message='Ryan si ritira dallo scontro.';render()">RITIRATI</button></div>\`
+}
+function inventory(){
+ app.innerHTML+=\`<div class="card"><h2>Inventario</h2>\${state.inventory.map(i=>\`<div class="stat"><div class="row"><span>\${esc(i.name)}</span><b>x\${i.qty}</b></div><span class="small muted">Valore \${i.value} oro</span></div>\`).join("")}<button onclick="heal()">USA POZIONE</button></div>\`;tabs()
+}
+function chronicles(){
+ app.innerHTML+=\`<div class="card"><h2>Cronache</h2><p class="muted">Le cronache leggono gli eventi registrati; non inventano eventi retroattivamente.</p><div class="log">\${state.chronicles.slice().reverse().map(x=>"<p>"+esc(x)+"</p>").join("")}</div></div>\`;tabs()
+}
+function diplomacyScreen(){
+ let rm=relation("thalorien","maraveth"),ra=relation("thalorien","avernia");
+ app.innerHTML+=\`<div class="card"><h2>Diplomazia</h2><div class="stat">Thalorien ↔ Maraveth: <b>\${rm}</b></div><div class="stat">Thalorien ↔ Avernia: <b>\${ra}</b></div><p class="muted">Le relazioni cambiano attraverso contatti, commercio, incidenti e tempo.</p><button class="primary" onclick="diplomacy()">INCONTRO CON MARAVETH</button><button onclick="trade()">APRI ROTTA COMMERCIALE</button></div>\`;tabs()
+}
+function information(){
+ app.innerHTML+=\`<div class="card"><h2>Informazioni</h2><p>Conosciuti: \${state.player.known.map(id=>realm(id).name).join(", ")}</p><p class="muted">Elaris distingue ciò che esiste nel mondo da ciò che Ryan conosce. Questo prototipo espone solo una parte delle informazioni.</p></div><div class="card"><h3>Eventi recenti</h3><div class="log">\${state.events.slice(-12).reverse().map(e=>"<p>G"+e.day+" • "+esc(e.text)+"</p>").join("")||"<p>Nessun evento.</p>"}</div></div>\`;tabs()
+}
+function economy(){
+ app.innerHTML+=\`<div class="card"><h2>Economia</h2><div class="grid"><div class="stat">Cibo<br><b>\${state.world.food}</b></div><div class="stat">Commercio<br><b>\${state.world.trade}</b></div><div class="stat">Oro Ryan<br><b>\${state.player.gold}</b></div><div class="stat">Stabilità<br><b>\${state.world.stability}</b></div></div><p class="muted">Produzione, consumo e commercio modificano lentamente il mondo.</p><button class="primary" onclick="trade()">TRADE: 25 ORO → 2 FERRO</button></div>\`;tabs()
+}
+function tabs(){
+ app.innerHTML+=\`<div class="tabs"><button onclick="nav('world')">MONDO</button><button onclick="nav('character')">RYAN</button><button onclick="nav('adventure')">AVVENTURA</button><button onclick="nav('inventory')">ZAINO</button></div><div class="grid"><button onclick="nav('chronicles')">CRONACHE</button><button onclick="nav('diplomacyScreen')">DIPLOMAZIA</button><button onclick="nav('economy')">ECONOMIA</button><button onclick="nav('information')">INFO</button><button onclick="save()">SALVA</button><button onclick="tick(6)">TEMPO +6H</button><button onclick="nav('menu')">MENU</button></div>\`
+}
 render();
-</script></body></html>
+</script>
+</body>
+</html>
