@@ -30,7 +30,7 @@ private fun ElarisApp() {
     var screen by remember { mutableStateOf(Screen.MENU) }
     var world by remember { mutableStateOf(ElarisCanon.createInitialWorld()) }
     var combat by remember { mutableStateOf<CombatResult?>(null) }
-    var saveMessage by remember { mutableStateOf("") }
+    var saveMessage by remember { mutableStateOf("") }\n    val saveRepository = remember { LocalSaveRepository(this@MainActivity) }
 
     MaterialTheme {
         Surface(Modifier.fillMaxSize()) {
@@ -44,7 +44,7 @@ private fun ElarisApp() {
                 when (screen) {
                     Screen.MENU -> {
                         Button(onClick = { screen = Screen.WORLD }) { Text("Start") }
-                        OutlinedButton(onClick = { saveMessage = "Caricamento locale: sistema di salvataggio in integrazione." }) { Text("Carica partita") }
+                        OutlinedButton(onClick = {\n                            if (saveRepository.exists()) {\n                                runCatching { world = saveRepository.load(); saveMessage = "Partita caricata." }\n                                    .onFailure { saveMessage = "Salvataggio non valido: ${it.message}" }\n                            } else saveMessage = "Nessun salvataggio presente."\n                        }) { Text("Carica partita") }
                         OutlinedButton(onClick = { screen = Screen.SAVE }) { Text("Salva partita") }
                         if (saveMessage.isNotEmpty()) Text(saveMessage)
                     }
@@ -113,7 +113,7 @@ private fun ElarisApp() {
                         SectionTitle("Salvataggio")
                         Text("Stato corrente: tick ${world.time.tick}")
                         Button(onClick = {
-                            saveMessage = "Salvataggio locale persistente in integrazione."
+                            runCatching { saveRepository.save(world); saveMessage = "Partita salvata." }\n                                .onFailure { saveMessage = "Errore salvataggio: ${it.message}" }
                         }) { Text("Salva") }
                         Text(saveMessage)
                         BackButton { screen = Screen.MENU }
