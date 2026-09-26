@@ -1,4 +1,6 @@
 name: Deploy Elaris Web
+
+# Automatic publication target
 on:
   push:
     branches: [ main ]
