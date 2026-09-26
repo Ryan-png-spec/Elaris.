@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>Elaris — World Simulation</title>
+<title>Elaris — World Simulation</title><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg">
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0b1020;color:#eef2ff}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#1b2440,#080b13 65%);min-height:100vh}
@@ -194,6 +194,7 @@ function economy(){
 function tabs(){
  app.innerHTML+=\`<div class="tabs"><button onclick="nav('world')">MONDO</button><button onclick="nav('character')">RYAN</button><button onclick="nav('adventure')">AVVENTURA</button><button onclick="nav('inventory')">ZAINO</button></div><div class="grid"><button onclick="nav('chronicles')">CRONACHE</button><button onclick="nav('diplomacyScreen')">DIPLOMAZIA</button><button onclick="nav('economy')">ECONOMIA</button><button onclick="nav('information')">INFO</button><button onclick="save()">SALVA</button><button onclick="tick(6)">TEMPO +6H</button><button onclick="nav('menu')">MENU</button></div>\`
 }
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js"));
 render();
 </script>
 </body>
