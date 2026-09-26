@@ -13,6 +13,7 @@ android {
         versionName = "0.1.0"
     }
     buildFeatures { compose = true }
+    sourceSets["main"].java.srcDirs("../src/main/kotlin")
 }
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2025.08.00")
