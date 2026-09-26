@@ -1,7 +1,15 @@
-# Elaris
+# Elaris — Android Core Rebuild
 
-Persistent fantasy RPG for Android.
+Nuovo nucleo Android/Kotlin di Elaris. Il vecchio prototipo HTML non è la fonte di verità.
 
-Base rebuild: deterministic core, persistent world state, autonomous systems, versioned persistence, Chronicles, inventory, diplomacy and bounded combat.
+- Core Kotlin isolato dalla UI
+- 13 regni canonici e Ryan Shadow controllato dal giocatore
+- RNG deterministico
+- comandi validati e duplicati bloccati
+- Cronache da eventi
+- NPC, informazioni, diplomazia, economia, inventario
+- combattimento bounded
+- salvataggi versionati
+- shell Android Start / Salva / Carica / primo combattimento
 
-Current baseline: Android core rebuild.
+Il core è verificabile con kotlinc. L'ambiente corrente non dispone dell'Android SDK, quindi l'APK non è stato compilato qui.
